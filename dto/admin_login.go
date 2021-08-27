@@ -17,10 +17,6 @@ type AdminLoginInput struct {
 	Password string `json:"password" form:"password" comment:"密码" example:"123456" validate:"required"`                   //密码
 }
 
-type AdminChangePwd struct {
-	Password string
-}
-
 func (param *AdminLoginInput) BindValidParam(c *gin.Context) error {
 	return public.DefaultGetValidParams(c, param)
 }

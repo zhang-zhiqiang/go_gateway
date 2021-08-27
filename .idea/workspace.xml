@@ -2,21 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="de9a2c66-939c-4aad-88b2-979caea9f3e1" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/controller/admin.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/dto/admin.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/util.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/controller/admin_login.go" beforeDir="false" afterPath="$PROJECT_DIR$/controller/admin_login.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/controller/admin.go" beforeDir="false" afterPath="$PROJECT_DIR$/controller/admin.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dao/admin.go" beforeDir="false" afterPath="$PROJECT_DIR$/dao/admin.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/docs.go" beforeDir="false" afterPath="$PROJECT_DIR$/docs/docs.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/swagger.json" beforeDir="false" afterPath="$PROJECT_DIR$/docs/swagger.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/swagger.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/docs/swagger.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dto/admin.go" beforeDir="false" afterPath="$PROJECT_DIR$/dto/admin.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dto/admin_login.go" beforeDir="false" afterPath="$PROJECT_DIR$/dto/admin_login.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/middleware/session_auth.go" beforeDir="false" afterPath="$PROJECT_DIR$/middleware/session_auth.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/const.go" beforeDir="false" afterPath="$PROJECT_DIR$/public/const.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/router/route.go" beforeDir="false" afterPath="$PROJECT_DIR$/router/route.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
