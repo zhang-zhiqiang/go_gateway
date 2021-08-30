@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"fmt"
+	"github.com/e421083458/go_gateway/public"
 	"github.com/e421083458/go_gateway_demo/dao"
 	"github.com/e421083458/go_gateway_demo/dto"
 	"github.com/e421083458/go_gateway_demo/middleware"
@@ -50,10 +52,51 @@ func (s *ServiceController) ServiceList(c *gin.Context) {
 
 	outList := []dto.ServiceListItemOutput{}
 	for _, listItem := range list {
+		serviceDetail, err := listItem.ServiceDetail(c, tx, &listItem)
+		if err != nil {
+			middleware.ResponseError(c, 3004, err)
+			return
+		}
+
+		serviceAddr := "unknow"
+		clusterIp := lib.GetStringConf("base.cluster.cluster_ip")
+		clusterPort := lib.GetStringConf("base.cluster.cluster_port")
+		clusterSSLPort := lib.GetStringConf("base.cluster.cluster_ssl_port")
+
+		if serviceDetail.Info.LoadType == public.LoadTypeHTTP &&
+			serviceDetail.HTTPRule.RuleType == public.HTTPRuleTypePrefixURL &&
+			serviceDetail.HTTPRule.NeedHttps == 1 {
+			serviceAddr = fmt.Sprintf("%s:%s%s", clusterIp, clusterSSLPort, serviceDetail.HTTPRule.Rule)
+		}
+
+		if serviceDetail.Info.LoadType == public.LoadTypeHTTP &&
+			serviceDetail.HTTPRule.RuleType == public.HTTPRuleTypePrefixURL &&
+			serviceDetail.HTTPRule.NeedHttps == 0 {
+			serviceAddr = fmt.Sprintf("%s:%s%s", clusterIp, clusterPort, serviceDetail.HTTPRule.Rule)
+		}
+
+		if serviceDetail.Info.LoadType == public.LoadTypeHTTP &&
+			serviceDetail.HTTPRule.RuleType == public.HTTPRuleTypeDomain {
+			serviceAddr = serviceDetail.HTTPRule.Rule
+		}
+
+		if serviceDetail.Info.LoadType == public.LoadTypeTCP {
+			serviceAddr = fmt.Sprintf("%s:%d", clusterIp, serviceDetail.TCPRule.Port)
+		}
+
+		if serviceDetail.Info.LoadType == public.LoadTypeGRPC {
+			serviceAddr = fmt.Sprintf("%s:%d", clusterIp, serviceDetail.GRPCRule.Port)
+		}
+
+		ipList := serviceDetail.LoadBalance.GetIPListByModel()
 		outItem := dto.ServiceListItemOutput{
 			ID:          listItem.ID,
 			ServiceName: listItem.ServiceName,
 			ServiceDesc: listItem.ServiceDesc,
+			ServiceAddr: serviceAddr,
+			Qps:         0,
+			Qpd:         0,
+			TotalNode:   len(ipList),
 		}
 		outList = append(outList, outItem)
 	}
