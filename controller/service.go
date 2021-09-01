@@ -19,7 +19,9 @@ func ServiceRegister(group *gin.RouterGroup) {
 	service := &ServiceController{}
 	group.GET("/service_list", service.ServiceList)
 	group.GET("/service_delete", service.ServiceDelete)
+	group.GET("/service_detail", service.ServiceDetail)
 	group.POST("/service_add_http", service.ServiceAddHttp)
+	group.POST("/service_update_http", service.ServiceUpdateHttp)
 }
 
 // ServiceList godoc
@@ -151,18 +153,62 @@ func (s *ServiceController) ServiceDelete(c *gin.Context) {
 	middleware.ResponseSuccess(c, "")
 }
 
+// ServiceDetail godoc
+// @Summary 服务详情
+// @Description 服务详情
+// @Tags 服务管理
+// @ID /service/service_detail
+// @Accept  json
+// @Produce  json
+// @Param id query string true "服务ID"
+// @Success 200 {object} middleware.Response{data=dao.ServiceDetail} "success"
+// @Router /service/service_detail [get]
+func (s *ServiceController) ServiceDetail(c *gin.Context) {
+	params := &dto.ServiceDeleteInput{}
+	if err := params.BindValidParam(c); err != nil {
+		middleware.ResponseError(c, 3000, err)
+		return
+	}
+
+	tx, err := lib.GetGormPool("default")
+	if err != nil {
+		middleware.ResponseError(c, 3001, err)
+		return
+	}
+
+	serviceInfo := &dao.ServiceInfo{ID: params.Id}
+	serviceInfo, err = serviceInfo.Find(c, tx, serviceInfo)
+	if err != nil {
+		middleware.ResponseError(c, 3002, err)
+		return
+	}
+	serviceDetail, err := serviceInfo.ServiceDetail(c, tx, serviceInfo)
+	if err != nil {
+		middleware.ResponseError(c, 3003, err)
+		return
+	}
+
+	serviceInfo.IsDelete = 1
+	if err := serviceInfo.Save(c, tx); err != nil {
+		middleware.ResponseError(c, 3003, err)
+		return
+	}
+
+	middleware.ResponseSuccess(c, serviceDetail)
+}
+
 // ServiceAddHttp godoc
 // @Summary 添加HTTP服务
 // @Description 添加HTTP服务
 // @Tags 服务管理
 // @ID /service/service_add_http
 // @Accept  json
-// @Param body body dto.ServiceUpdateHTTPInput true "body"
+// @Param body body dto.ServiceAddHTTPInput true "body"
 // @Produce  json
 // @Success 200 {object} middleware.Response{data=string} "success"
 // @Router /service/service_add_http [post]
 func (s *ServiceController) ServiceAddHttp(c *gin.Context) {
-	params := &dto.ServiceUpdateHTTPInput{}
+	params := &dto.ServiceAddHTTPInput{}
 	if err := params.BindValidParam(c); err != nil {
 		middleware.ResponseError(c, 4000, err)
 		return
@@ -254,6 +300,97 @@ func (s *ServiceController) ServiceAddHttp(c *gin.Context) {
 		return
 	}
 
+	tx.Commit()
+	middleware.ResponseSuccess(c, "")
+}
+
+// ServiceUpdateHttp godoc
+// @Summary 修改HTTP服务
+// @Description 修改HTTP服务
+// @Tags 服务管理
+// @ID /service/service_update_http
+// @Accept  json
+// @Param body body dto.ServiceUpdateHTTPInput true "body"
+// @Produce  json
+// @Success 200 {object} middleware.Response{data=string} "success"
+// @Router /service/service_update_http [post]
+func (service *ServiceController) ServiceUpdateHttp(c *gin.Context) {
+	params := &dto.ServiceUpdateHTTPInput{}
+	if err := params.BindValidParam(c); err != nil {
+		middleware.ResponseError(c, 4000, err)
+		return
+	}
+
+	if len(strings.Split(params.IpList, ",")) != len(strings.Split(params.WeightList, ",")) {
+		middleware.ResponseError(c, 4001, errors.New("IP列表与权重列表数量不一致"))
+		return
+	}
+
+	tx, err := lib.GetGormPool("default")
+	if err != nil {
+		middleware.ResponseError(c, 4002, err)
+		return
+	}
+	tx = tx.Begin()
+	serviceInfo := &dao.ServiceInfo{ServiceName: params.ServiceName}
+	serviceInfo, err = serviceInfo.Find(c, tx, serviceInfo)
+	if err != nil {
+		tx.Rollback()
+		middleware.ResponseError(c, 4003, errors.New("服务不存在"))
+		return
+	}
+	serviceDetail, err := serviceInfo.ServiceDetail(c, tx, serviceInfo)
+	if err != nil {
+		tx.Rollback()
+		middleware.ResponseError(c, 4004, errors.New("服务不存在"))
+		return
+	}
+
+	info := serviceDetail.Info
+	info.ServiceDesc = params.ServiceDesc
+	if err := info.Save(c, tx); err != nil {
+		tx.Rollback()
+		middleware.ResponseError(c, 4005, err)
+		return
+	}
+
+	httpRule := serviceDetail.HTTPRule
+	httpRule.NeedHttps = params.NeedHttps
+	httpRule.NeedStripUri = params.NeedStripUri
+	httpRule.NeedWebsocket = params.NeedWebsocket
+	httpRule.UrlRewrite = params.UrlRewrite
+	httpRule.HeaderTransfor = params.HeaderTransfor
+	if err := httpRule.Save(c, tx); err != nil {
+		tx.Rollback()
+		middleware.ResponseError(c, 4006, err)
+		return
+	}
+
+	accessControl := serviceDetail.AccessControl
+	accessControl.OpenAuth = params.OpenAuth
+	accessControl.BlackList = params.BlackList
+	accessControl.WhiteList = params.WhiteList
+	accessControl.ClientIPFlowLimit = params.ClientIPFlowLimit
+	accessControl.ServiceFlowLimit = params.ServiceFlowLimit
+	if err := accessControl.Save(c, tx); err != nil {
+		tx.Rollback()
+		middleware.ResponseError(c, 4007, err)
+		return
+	}
+
+	loadbalance := serviceDetail.LoadBalance
+	loadbalance.RoundType = params.RoundType
+	loadbalance.IpList = params.IpList
+	loadbalance.WeightList = params.WeightList
+	loadbalance.UpstreamConnectTimeout = params.UpstreamConnectTimeout
+	loadbalance.UpstreamHeaderTimeout = params.UpstreamHeaderTimeout
+	loadbalance.UpstreamIdleTimeout = params.UpstreamIdleTimeout
+	loadbalance.UpstreamMaxIdle = params.UpstreamMaxIdle
+	if err := loadbalance.Save(c, tx); err != nil {
+		tx.Rollback()
+		middleware.ResponseError(c, 4008, err)
+		return
+	}
 	tx.Commit()
 	middleware.ResponseSuccess(c, "")
 }
